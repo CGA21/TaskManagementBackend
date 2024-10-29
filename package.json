@@ -1,0 +1,22 @@
+{
+  "name": "tm_backend",
+  "version": "0.0.0",
+  "description": "TM_Backend",
+  "main": "server.js",
+  "author": {
+    "name": ""
+  },
+  "eslintConfig": {},
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "express-fileupload": "^1.5.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.7.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.12.0"
+  }
+}
