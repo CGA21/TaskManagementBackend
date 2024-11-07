@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const Project = require('../models/Projects');
 const fileUpload = require('express-fileupload');
-const file = require('../models/Files');
+const file = require('../models/files');
 
 const router = express.Router();
 const dir = '../Documents';
@@ -21,7 +21,7 @@ router.post('/upload', async function (req, res, next) {
         res.send('File Uploaded');
     });
     try {
-        var f = new file({ pid: pid, filename: upfile.name });
+        var f = new file({ pid: pid, filename: upfile.name, filepath: path,uid:uid });
         await f.save();
     } catch (err) {
         console.error(err.message);
@@ -56,6 +56,12 @@ router.get('/download', async (req, res) => {
 
 router.post('/delete', async (req, res) => {
     var { id } = req.body;
-    
+    try {
+        await file.deleteOne({ _id: id });
+        res.send('file deleted');
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).send('error occured internally');
+    }
 });
 module.exports = router;

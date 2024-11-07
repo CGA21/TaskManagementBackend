@@ -36,14 +36,12 @@ router.post('/delete', async (req, res) => {
     var { uid, pid } = req.body;
     try {
         //fetch all related Projects and users
-        let usr = await User.findOne({ uid: uid }, 'uid plimit role');
-        let pr = await Project.findOne({ pid: pid }, 'pid uid');
+        let usr = await User.findOne({ _id: uid },'_id');
+        let pr = await Project.findOne({ pid: pid });
 
         //check if user has rights
         if (usr.email == 'admin' || uid == pr.uid) {
-            let pr_user = await User.findOne({ uid: pr.uid }, 'plimit');
-            await User.updateOne({ uid: pr.uid }, { $set: { plimit: pr_user.plimit + 1 } });
-            var r = await Project.deleteOne({ pid });
+            var r = await Project.deleteOne({ _id: pid });
             return res.json({ deleted: r });
         }
         return res.status(300).send('user does not have rights to delete project');
@@ -68,7 +66,6 @@ router.post('/fetchById', async (req, res) => {
 
 //INPUT - UserID
 //OUTPUT - 
-
 router.post('/fetchByUser', async (req, res) => {
     var { id } = req.body;
     try {

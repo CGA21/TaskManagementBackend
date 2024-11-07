@@ -31,7 +31,7 @@
   <ItemGroup>
     <Content Include=".env" />
     <Content Include="models\Comments.js" />
-    <Content Include="models\Files.js" />
+    <Content Include="models\files.js" />
     <Content Include="models\Projects.js" />
     <Content Include="models\Tasks.js" />
     <Content Include="models\User.js" />
