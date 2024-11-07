@@ -8,20 +8,9 @@ const router = express.Router();
 
 router.post('/create', async (req, res) => {
 
-    var { pname, uid, members, pid, datetime } = req.body;
+    var { name, creator, deadline, members } = req.body;
     try {
-        let op = await Project.findOne({ pid: pid });
-        if (op) {
-            return res.status(400).send('Project id exists');
-        }
-        let limit = await User.findOne({ uid: uid }, 'plimit');
-        l = limit.plimit
-        if (l <= 0) {
-            return res.status(300).send('Project creation limit exceeded');
-        }
-        l = l - 1;
-        await User.updateOne({ uid }, { $set: { plimit: l } });
-        proj = new Project({ pname, uid, members, pid, datetime });
+        proj = new Project({ pname:name, uid:creator, members:members, datetime:deadline });
         await proj.save();
         res.json({ msg: 'project created' });
     } catch (err) {
@@ -32,18 +21,10 @@ router.post('/create', async (req, res) => {
 
 router.post('/edit', async (req, res) => {
 
-    var { pname, uid, members, pid, datetime } = req.body;
+    var { name, members, pid, deadline } = req.body;
     try {
-        //fetch all related Projects and users
-        let usr = await User.findOne({ uid: uid }, 'uid plimit role');
-        let pr = await Project.findOne({ pid: pid }, 'pid uid');
-
-        //check if user has rights
-        if (usr.role == 'admin' || uid == pr.uid) {
-            await Project.updateOne({ pid }, req.body);
-            return res.json({ msg: 'successful' });
-        }
-        return res.status(300).send('user does not have rights to edit');
+        await Project.updateOne({ _id: pid }, {pname:name,members:members,datetime:deadline});
+        return res.json({ msg: 'successful' });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Unable to update')
@@ -59,7 +40,7 @@ router.post('/delete', async (req, res) => {
         let pr = await Project.findOne({ pid: pid }, 'pid uid');
 
         //check if user has rights
-        if (usr.role == 'admin' || uid == pr.uid) {
+        if (usr.email == 'admin' || uid == pr.uid) {
             let pr_user = await User.findOne({ uid: pr.uid }, 'plimit');
             await User.updateOne({ uid: pr.uid }, { $set: { plimit: pr_user.plimit + 1 } });
             var r = await Project.deleteOne({ pid });
@@ -85,11 +66,45 @@ router.post('/fetchById', async (req, res) => {
     }
 });
 
+//INPUT - UserID
+//OUTPUT - 
+
 router.post('/fetchByUser', async (req, res) => {
     var { id } = req.body;
     try {
         all_pr = await Projects.find({ members: id });
         return res.json(all_pr);
+    } catch (err) {
+        console.error(err.message);
+        return res.status(500).send('Fetch error')
+    }
+});
+
+//input:  UserID , ProjectID
+// output: Username
+router.post('/user_info', async (req, res) => {
+    
+    var { uid,pid } = req.body;
+    try {
+        usr = await User.find({ _id: uid });
+        all_tasks = await Task.countDocuments({ uid: uid, pid: pid });
+        completed = await Task.countDocuments({ uid: uid, pid: pid, checked: true });
+        return res.json({ name: usr.name, _id: user._id, progress: (completed / all_tasks) * 100 });
+    } catch (err) {
+        console.error(err.message);
+        return res.status(500).send('Fetch error');
+    }
+});
+
+//INPUT - UserID, ProjectID
+//OUTPUT - Progress percentage
+router.post('/progress', async (req, res) => {
+    var { uid,pid } = req.body;
+    try {
+        all_tasks = await Task.countDocuments({ uid: uid, pid: pid });
+        completed = await Task.countDocuments({ uid: uid, pid: pid, checked: true });
+        console.log(`all = ${all_tasks} || completed = ${completed} || progress = ${(completed / all_tasks) * 100}`)
+        res.json({ progress: (completed / all_tasks) * 100 });
     } catch (err) {
         console.error(err.message);
         return res.status(500).send('Fetch error')

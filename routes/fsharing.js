@@ -54,4 +54,8 @@ router.get('/download', async (req, res) => {
     });
 });
 
+router.post('/delete', async (req, res) => {
+    var { id } = req.body;
+    
+});
 module.exports = router;

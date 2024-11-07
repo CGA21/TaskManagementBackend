@@ -2,6 +2,7 @@
 
 //express environment
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const port = 1337;
 
@@ -17,6 +18,7 @@ const db = process.env.MONGO_URL;
 //app.use(bodyparser.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+app.use(cors());
 
 
 app.use('/api/auth', require('./routes/auth'));
@@ -26,8 +28,8 @@ app.use('/api/file', require('./routes/fsharing'));
 
 //database connection
 mongoose.connect(db, {
-    tls: true,
-    tlsAllowInvalidCertificates: true
+//    tls: true,
+//    tlsAllowInvalidCertificates: true
 }).then(() => {
     console.log('Connected to MongoDB Atlas');
 }).catch((err) => {

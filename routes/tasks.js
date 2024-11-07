@@ -7,19 +7,9 @@ const router = express.Router();
 
 router.post('/create', async (req, res) => {
 
-    var { msg, uid, tid, pid, datetime, checked , priority} = req.body;
+    var { message, creator, project, deadline, checked , priority} = req.body;
     try {
-        let op = await Task.findOne({ tid: tid });
-        if (op) {
-            return res.status(400).send('Task id exists');
-        }
-        let limit = await User.findOne({ uid: uid }, 'tlimit');
-        if (limit.tlimit <= 0) {
-            return res.status(300).send('Task creation limit exceeded');
-        }
-        var l = limit.tlimit - 1;
-        await User.updateOne({ uid: uid }, { $set: { tlimit: l } });
-        tsk = new Task({ msg, uid, tid, pid, datetime, checked, priority });
+        tsk = new Task({ msg:message, uid:creator, pid:project, datetime:deadline, checked:checked, priority:priority });
         await tsk.save();
         res.json({ msg: 'task created' });
     } catch (err) {
@@ -29,9 +19,10 @@ router.post('/create', async (req, res) => {
 
 });
 
+/*
 router.post('/edit', async (req, res) => {
 
-    var { msg, uid, tid, pid, datetime, checked, priority } = req.body;
+    var { tid, checked} = req.body;
     try {
         //fetch all related Projects and users
         let tsk = await Task.findOne({ tid: tid }, 'tid uid pid');
@@ -49,25 +40,15 @@ router.post('/edit', async (req, res) => {
         res.status(500).send('Unable to update');
     }
 });
+*/
 
 router.post('/delete', async (req, res) => {
 
-    var { tid, uid } = req.body;
+    var { id} = req.body;
     try {
-        //fetch all related Projects and users
-        let tsk = await Task.findOne({ tid: tid }, 'tid uid pid');
-        let usr = await User.findOne({ uid: uid }, 'uid tlimit role');
-        let pr = await Project.findOne({ pid: tsk.pid }, 'pid uid');
-
-        //check for rights to delete task and delete
-        if (usr.role == 'admin' || tsk.uid == uid || pr.uid == uid) {
-            let tsk_usr = await User.findOne({ uid: tsk.uid }, 'tlimit');
-            await User.updateOne({ uid: tsk_usr.uid }, { $set: { tlimit: tsk_usr.tlimit + 1 } });
-            var r = await Task.deleteOne({ tid });
-            return res.json({ deleted: r });
-        }
-        return res.status(300).send('user has no rights to delete task');
-    } catch (err) {
+        var r = await Task.deleteOne({ _id: id });
+        return res.json({ deleted: r });
+        } catch (err) {
         console.error(err.message);
         res.status(500).send('Deletion error');
     }
@@ -76,7 +57,7 @@ router.post('/delete', async (req, res) => {
 router.post('/fetchbyId', async (req, res) => {
     var { id } = req.body;
     try {
-        let ob = await Task.findOne({ tid: id });
+        let ob = await Task.findOne({ _id: id });
         res.json(ob);
     } catch (err) {
         console.error(err.message);

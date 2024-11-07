@@ -9,15 +9,8 @@ const JWT_SECRET = '121fe6a79ee33ee25cc1bed26489d3459e02114676026d24227d9a88fbcf
 //console.log('auth.js setup complete..')
 
 router.post('/register', async (req, res) => {
-    var { name, pass, email, age, uid, paid, role } = req.body;
-    if (paid) {
-        plimit = 100;
-        tlimit = 500;
-    }
-    else {
-        plimit = 5;
-        tlimit = 50;
-    }
+    var { name, pass, email } = req.body;
+    
     try {
         let user = await User.findOne({ email });
         if (user) {
@@ -25,10 +18,10 @@ router.post('/register', async (req, res) => {
         }
         const salt = await bcrypt.genSalt(10);
         const epass = await bcrypt.hash(pass, salt);
-        user = new User({ name, pass: epass, email, age , uid, plimit, tlimit,paid,role});
+        user = new User({ name, pass, email});
         await user.save();
-        const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token });
+        //const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
+        res.json({ userId: user._id });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -37,6 +30,7 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
     var { email, pass } = req.body;
+    console.log("API request received for " + email + " and " + pass);
     try {
         // Check if the user exists
         const user =  await User.findOne({email});
@@ -47,19 +41,20 @@ router.post('/login', async (req, res) => {
         // Check password
         const isMatch =  await bcrypt.compare(pass, user.pass);
         if (!isMatch) {
+        //if (pass != user.pass) {
             return res.status(400).json({ msg: 'Invalid credentials' });
         }
 
         // Generate JWT token
-        const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
-
-        res.json({ token });
+        //const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
+        
+        return res.status(200).json({ userId: user._id });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
     }
 });
-
+/*
 router.post('/assign_role', async (req, res) => {
     var { uid, new_role } = req.body;
     try {
@@ -72,4 +67,5 @@ router.post('/assign_role', async (req, res) => {
         res.status(500).send('server error');
     }
 });
+*/
 module.exports = router;
