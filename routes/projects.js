@@ -7,7 +7,7 @@ const router = express.Router();
 
 
 router.post('/create', async (req, res) => {
-
+    console.log("API request received for project creation");
     var { name, creator, deadline, members } = req.body;
     try {
         proj = new Project({ pname:name, uid:creator, members:members, datetime:deadline });
@@ -20,7 +20,7 @@ router.post('/create', async (req, res) => {
 });
 
 router.post('/edit', async (req, res) => {
-
+    console.log("API request received for project edit");
     var { name, members, pid, deadline } = req.body;
     try {
         await Project.updateOne({ _id: pid }, {pname:name,members:members,datetime:deadline});
@@ -32,7 +32,7 @@ router.post('/edit', async (req, res) => {
 });
 
 router.post('/delete', async (req, res) => {
-
+    console.log("API request received for project delete");
     var { uid, pid } = req.body;
     try {
         //fetch all related Projects and users
@@ -53,10 +53,11 @@ router.post('/delete', async (req, res) => {
 });
 
 router.post('/fetchById', async (req, res) => {
+    console.log("API request received for projects fetchbyID");
     var { id } = req.body;
     try {
-        let ob = await Project.findOne({ pid: id });
-        console.log(ob);
+        let ob = await Project.findOne({ _id: id });
+        //console.log(ob);
         res.json(ob);
     } catch (err) {
         console.error(err.message);
@@ -67,9 +68,10 @@ router.post('/fetchById', async (req, res) => {
 //INPUT - UserID
 //OUTPUT - 
 router.post('/fetchByUser', async (req, res) => {
+    console.log("API request received for project fetchbyUser");
     var { id } = req.body;
     try {
-        all_pr = await Projects.find({ members: id });
+        all_pr = await Project.find({ members: id });
         return res.json(all_pr);
     } catch (err) {
         console.error(err.message);
@@ -80,7 +82,7 @@ router.post('/fetchByUser', async (req, res) => {
 //input:  UserID , ProjectID
 // output: Username
 router.post('/user_info', async (req, res) => {
-    
+    console.log("API request received for project user_info");
     var { uid,pid } = req.body;
     try {
         usr = await User.find({ _id: uid });
@@ -96,6 +98,7 @@ router.post('/user_info', async (req, res) => {
 //INPUT - UserID, ProjectID
 //OUTPUT - Progress percentage
 router.post('/progress', async (req, res) => {
+    console.log("API request received for progress");
     var { uid,pid } = req.body;
     try {
         all_tasks = await Task.countDocuments({ uid: uid, pid: pid });
@@ -107,4 +110,17 @@ router.post('/progress', async (req, res) => {
         return res.status(500).send('Fetch error')
     }
 });
+
+router.post('/fetchUserName', async (req, res) => {
+    console.log("API request received for fetch User");
+    var { id } = req.body;
+    try {
+        usr = await User.findOne({ _id: id }, 'name');
+        res.json({ name: usr.name });
+    } catch (err) {
+        console.error(err.message);
+        return res.status(500).send('Fetch error')
+    }
+});
+
 module.exports = router;

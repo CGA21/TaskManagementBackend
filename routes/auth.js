@@ -10,7 +10,7 @@ const JWT_SECRET = '121fe6a79ee33ee25cc1bed26489d3459e02114676026d24227d9a88fbcf
 
 router.post('/register', async (req, res) => {
     var { name, pass, email } = req.body;
-    
+    console.log("API request received for register:" + email);
     try {
         let user = await User.findOne({ email });
         if (user) {
@@ -30,7 +30,7 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
     var { email, pass } = req.body;
-    console.log("API request received for " + email + " and " + pass);
+    console.log("API request received for login:" + email );
     try {
         // Check if the user exists
         const user =  await User.findOne({email});

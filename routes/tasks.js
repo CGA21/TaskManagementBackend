@@ -6,7 +6,7 @@ const User = require('../models/User');
 const router = express.Router();
 
 router.post('/create', async (req, res) => {
-
+    console.log("API request received for task creation");
     var { message, creator, project, deadline, checked , priority} = req.body;
     try {
         tsk = new Task({ msg:message, uid:creator, pid:project, datetime:deadline, checked:checked, priority:priority });
@@ -42,8 +42,18 @@ router.post('/edit', async (req, res) => {
 });
 */
 
-router.post('/delete', async (req, res) => {
+router.post('/edit', async (req, res) => {
+    var { id, checked } = req.body;
+    try {
+        await Task.updateOne({ _id: id }, {checked:checked});
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Cannot edit task");
+    }
+});
 
+router.post('/delete', async (req, res) => {
+    console.log("API request received for task deletion");
     var { id} = req.body;
     try {
         var r = await Task.deleteOne({ _id: id });
@@ -55,6 +65,7 @@ router.post('/delete', async (req, res) => {
 });
 
 router.post('/fetchbyId', async (req, res) => {
+    console.log("API request received for task fetchByID");
     var { id } = req.body;
     try {
         let ob = await Task.findOne({ _id: id });
@@ -66,6 +77,7 @@ router.post('/fetchbyId', async (req, res) => {
 });
 
 router.post('/fetchByPU', async (req, res) => {
+    console.log("API request received for task fetch by project & user");
     var { project, user } = req.body;
     try {
         let tsks = await Task.find({ pid: project, uid: user });
