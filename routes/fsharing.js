@@ -25,12 +25,13 @@ router.post('/upload', async function (req, res, next) {
         await f.save();
     } catch (err) {
         console.error(err.message);
+        es.status(400).send('File upload failed');
     }
 });
 
 router.post('/fetch_files', async (req, res) => {
     var { id } = req.body;
-    let ffs = file.find({ pid: id });
+    let ffs = await file.find({ pid: id });
     return res.json(ffs);
 });
 

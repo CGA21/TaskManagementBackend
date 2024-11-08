@@ -36,7 +36,7 @@ router.post('/delete', async (req, res) => {
     var { uid, pid } = req.body;
     try {
         //fetch all related Projects and users
-        let usr = await User.findOne({ _id: uid },'_id');
+        let usr = await User.findOne({ _id: uid },'email');
         let pr = await Project.findOne({ pid: pid });
 
         //check if user has rights

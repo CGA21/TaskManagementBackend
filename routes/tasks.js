@@ -45,7 +45,8 @@ router.post('/edit', async (req, res) => {
 router.post('/edit', async (req, res) => {
     var { id, checked } = req.body;
     try {
-        await Task.updateOne({ _id: id }, {checked:checked});
+        await Task.updateOne({ _id: id }, { checked: checked });
+        res.json({ msg: 'Changed Sucessfully' });
     } catch (err) {
         console.error(err.message);
         res.status(500).send("Cannot edit task");
