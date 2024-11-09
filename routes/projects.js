@@ -97,7 +97,7 @@ router.post('/user_info', async (req, res) => {
     console.log("API request received for project user_info");
     var { uid,pid } = req.body;
     try {
-        usr = await User.find({ _id: uid });
+        usr = await User.findOne({ _id: uid });
         all_tasks = await Task.countDocuments({ uid: uid, pid: pid });
         completed = await Task.countDocuments({ uid: uid, pid: pid, checked: true });
         return res.json({ name: usr.name, _id: usr._id, progress: (completed / all_tasks) * 100 });
