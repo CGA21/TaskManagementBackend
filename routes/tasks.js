@@ -89,4 +89,18 @@ router.post('/fetchByPU', async (req, res) => {
     }
 });
 
+//INPUT - UserID, ProjectID
+//OUTPUT - Progress percentage
+router.post('/progress', async (req, res) => {
+    console.log("API request received for progress");
+    var { uid, pid } = req.body;
+    try {
+        all_tasks = await Task.countDocuments({ uid: uid, pid: pid });
+        completed = await Task.countDocuments({ uid: uid, pid: pid, checked: true });
+        res.json({ progress: (completed / all_tasks) * 100 });
+    } catch (err) {
+        console.error(err.message);
+        return res.status(500).send('Fetch error')
+    }
+});
 module.exports = router;

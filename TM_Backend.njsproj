@@ -35,7 +35,6 @@
     <Content Include="models\Projects.js" />
     <Content Include="models\Tasks.js" />
     <Content Include="models\User.js" />
-    <Content Include="routes\admin.js" />
     <Content Include="routes\auth.js" />
     <Content Include="routes\fsharing.js" />
     <Content Include="routes\messaging.js" />

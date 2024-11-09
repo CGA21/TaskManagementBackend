@@ -95,22 +95,6 @@ router.post('/user_info', async (req, res) => {
     }
 });
 
-//INPUT - UserID, ProjectID
-//OUTPUT - Progress percentage
-router.post('/progress', async (req, res) => {
-    console.log("API request received for progress");
-    var { uid,pid } = req.body;
-    try {
-        all_tasks = await Task.countDocuments({ uid: uid, pid: pid });
-        completed = await Task.countDocuments({ uid: uid, pid: pid, checked: true });
-        console.log(`all = ${all_tasks} || completed = ${completed} || progress = ${(completed / all_tasks) * 100}`)
-        res.json({ progress: (completed / all_tasks) * 100 });
-    } catch (err) {
-        console.error(err.message);
-        return res.status(500).send('Fetch error')
-    }
-});
-
 router.post('/fetchUserName', async (req, res) => {
     console.log("API request received for fetch User");
     var { id } = req.body;
@@ -120,6 +104,38 @@ router.post('/fetchUserName', async (req, res) => {
     } catch (err) {
         console.error(err.message);
         return res.status(500).send('Fetch error')
+    }
+});
+
+//INPUT - UserID, ProjectID
+//OUTPUT - Progress percentage
+router.post('/progress', async (req, res) => {
+    console.log("API request received for project progress");
+    var { id } = req.body;
+    try {
+        let all_tasks = 0;
+        let completed = 0;
+        pr = await Project.findOne({ _id: id }, 'members');
+        for (let uid of pr.members) {
+            all_tasks += await Task.countDocuments({ uid: uid, pid: id });
+            completed += await Task.countDocuments({ uid: uid, pid: id, checked: true });
+            //console.log(`member = ${uid} t = ${all_tasks}`);
+        }
+        res.json({ progress: (completed / all_tasks) * 100 });
+    } catch (err) {
+        console.error(err.message);
+        return res.status(500).send('Fetch error');
+    }
+});
+
+router.post('/get_users', async (req, res) => {
+    console.log("API request received for fetch all Users");
+    try {
+        usrs = await User.find({},'_id email name');
+        res.json(usrs);
+    } catch (err) {
+        console.error(err.message);
+        return res.status(500).send('Fetch error');
     }
 });
 
