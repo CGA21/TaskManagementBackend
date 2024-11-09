@@ -5,6 +5,7 @@ const User = require('../models/User');
 const createChannel = require('../discord/createChannel');
 const deleteChannel = require('../discord/deleteChannel');
 const fetchMessages = require('../discord/fetchMessages');
+const sendMessage = require('../discord/sendMessage');
 
 const router = express.Router();
 
@@ -158,6 +159,20 @@ router.post('/messages', async (req, res) => {
         pr = await Project.findOne({ _id: id }, 'channelId');
         msgs = await fetchMessages(pr.channelId);
         res.json(msgs);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Internal Error');
+    }
+});
+
+router.post('/send', async (req, res) => {
+    console.log("API request received for send messages");
+    var { id, msg } = req.body;
+    try {
+        pr = await Project.findOne({ _id: id }, 'channelId');
+        if (await sendMessage(pr.channelId, msg)) { res.json({ success: true }); }
+        else { res.status(400).json({ success: false }); }
+        
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Internal Error');
