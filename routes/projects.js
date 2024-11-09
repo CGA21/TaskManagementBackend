@@ -2,6 +2,9 @@ const express = require('express');
 const Project = require('../models/Projects');
 const Task = require('../models/Tasks');
 const User = require('../models/User');
+const createProjectChannel = require('../discord/createProjectChannel');
+const fetchMessages = require('../discord/fetchMessages');
+const deleteChannel = require('../discord/deleteChannel');
 
 const router = express.Router();
 
@@ -12,6 +15,8 @@ router.post('/create', async (req, res) => {
     try {
         proj = new Project({ pname:name, uid:creator, members:members, datetime:deadline });
         await proj.save();
+        const channelId = await createProjectChannel(name, proj._id);
+        await Project.updateOne({ _id: proj._id }, { channelId: channelId });
         res.json({ msg: 'project created' });
     } catch (err) {
         console.error(err.message);
@@ -37,10 +42,11 @@ router.post('/delete', async (req, res) => {
     try {
         //fetch all related Projects and users
         let usr = await User.findOne({ _id: uid },'email');
-        let pr = await Project.findOne({ pid: pid });
+        let pr = await Project.findOne({ _id: pid });
 
         //check if user has rights
         if (usr.email == 'admin' || uid == pr.uid) {
+            await deleteChannel(pr.channelId);
             var r = await Project.deleteOne({ _id: pid });
             return res.json({ deleted: r });
         }
@@ -85,10 +91,10 @@ router.post('/user_info', async (req, res) => {
     console.log("API request received for project user_info");
     var { uid,pid } = req.body;
     try {
-        usr = await User.find({ _id: uid });
+        usr = await User.findOne({ _id: uid });
         all_tasks = await Task.countDocuments({ uid: uid, pid: pid });
         completed = await Task.countDocuments({ uid: uid, pid: pid, checked: true });
-        return res.json({ name: usr.name, _id: user._id, progress: (completed / all_tasks) * 100 });
+        return res.json({ name: usr.name, uid: usr._id, progress: (completed / all_tasks) * 100 });
     } catch (err) {
         console.error(err.message);
         return res.status(500).send('Fetch error');
@@ -139,4 +145,28 @@ router.post('/get_users', async (req, res) => {
     }
 });
 
+router.post('/messages', async (req, res) => {
+    var { id } = req.body;
+    console.log("API request received for fetch all messages");
+    try {
+        pr = await Project.findOne({ _id: id }, 'channelId');
+        const messages = await fetchMessages(pr.channelId);
+        res.status(200).json({ success: true, messages });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Failed to fetch messages' });
+    }
+});
+
+/*
+router.post('/create_channel', async (req, res) => {
+    var { name, id } = req.body;
+    try {
+        const channelId = await createProjectChannel(name, id);
+        res.json('channel created');
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Discord Error');
+    }
+});
+*/
 module.exports = router;
