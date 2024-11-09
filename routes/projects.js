@@ -2,6 +2,9 @@ const express = require('express');
 const Project = require('../models/Projects');
 const Task = require('../models/Tasks');
 const User = require('../models/User');
+const createChannel = require('../discord/createChannel');
+const deleteChannel = require('../discord/deleteChannel');
+const fetchMessages = require('../discord/fetchMessages');
 
 const router = express.Router();
 
@@ -10,8 +13,15 @@ router.post('/create', async (req, res) => {
     console.log("API request received for project creation");
     var { name, creator, deadline, members } = req.body;
     try {
+
+        //create project
         proj = new Project({ pname:name, uid:creator, members:members, datetime:deadline });
         await proj.save();
+
+        //create discord channel
+        var channelId = await createChannel(name, proj._id);
+        await Project.updateOne({ _id: proj._id }, { channelId: channelId });
+        //send response
         res.json({ msg: 'project created' });
     } catch (err) {
         console.error(err.message);
@@ -37,10 +47,12 @@ router.post('/delete', async (req, res) => {
     try {
         //fetch all related Projects and users
         let usr = await User.findOne({ _id: uid },'email');
-        let pr = await Project.findOne({ pid: pid });
+        let pr = await Project.findOne({ _id: pid });
 
         //check if user has rights
         if (usr.email == 'admin' || uid == pr.uid) {
+            //delete channel
+            await deleteChannel(pr.channelId);
             var r = await Project.deleteOne({ _id: pid });
             return res.json({ deleted: r });
         }
@@ -88,7 +100,7 @@ router.post('/user_info', async (req, res) => {
         usr = await User.find({ _id: uid });
         all_tasks = await Task.countDocuments({ uid: uid, pid: pid });
         completed = await Task.countDocuments({ uid: uid, pid: pid, checked: true });
-        return res.json({ name: usr.name, _id: user._id, progress: (completed / all_tasks) * 100 });
+        return res.json({ name: usr.name, _id: usr._id, progress: (completed / all_tasks) * 100 });
     } catch (err) {
         console.error(err.message);
         return res.status(500).send('Fetch error');
@@ -139,4 +151,29 @@ router.post('/get_users', async (req, res) => {
     }
 });
 
+router.post('/messages', async (req, res) => {
+    console.log("API request received for fetch messages");
+    var { id } = req.body;
+    try {
+        pr = await Project.findOne({ _id: id }, 'channelId');
+        msgs = await fetchMessages(pr.channelId);
+        res.json(msgs);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Internal Error');
+    }
+});
+
+router.post('/channel', async (req, res) => {
+    console.log("API request received for fetch channel");
+    var { id } = req.body;
+    try {
+        //pr = Project.findOne({ _id: id }, 'channelId');
+        msgs = await fetchMessages(id);
+        res.json(msgs);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Internal Error');
+    }
+});
 module.exports = router;

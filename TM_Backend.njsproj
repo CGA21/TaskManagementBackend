@@ -30,6 +30,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include=".env" />
+    <Content Include="discord\createChannel.js" />
+    <Content Include="discord\deleteChannel.js" />
+    <Content Include="discord\fetchMessages.js" />
     <Content Include="models\Comments.js" />
     <Content Include="models\files.js" />
     <Content Include="models\Projects.js" />
@@ -47,6 +50,7 @@
   <ItemGroup>
     <Folder Include="models\" />
     <Folder Include="Documents\" />
+    <Folder Include="discord\" />
     <Folder Include="routes\" />
   </ItemGroup>
   <Import Project="$(VSToolsPath)\Node.js Tools\Microsoft.NodejsToolsV2.targets" />
