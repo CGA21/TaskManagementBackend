@@ -2,6 +2,7 @@ const express = require('express');
 const Project = require('../models/Projects');
 const Task = require('../models/Tasks');
 const User = require('../models/User');
+const Notifications = require('../models/Notifications');
 
 const router = express.Router();
 
@@ -11,6 +12,12 @@ router.post('/create', async (req, res) => {
     try {
         tsk = new Task({ msg:message, uid:creator, pid:project, datetime:deadline, checked:checked, priority:priority });
         await tsk.save();
+        //set notifications
+        pr = await Project.findOne({ _id: project }, 'pname');
+        n_msg = `new task assigned to you in project ${pr.pname}`;
+        var n = Notifications({ uid: creator, datetime: new Date(), text: n_msg });
+        await n.save();
+
         res.json({ msg: 'task created' });
     } catch (err) {
         console.error(err.message);
@@ -19,33 +26,20 @@ router.post('/create', async (req, res) => {
 
 });
 
-/*
-router.post('/edit', async (req, res) => {
-
-    var { tid, checked} = req.body;
-    try {
-        //fetch all related Projects and users
-        let tsk = await Task.findOne({ tid: tid }, 'tid uid pid');
-        let usr = await User.findOne({ uid: uid }, 'uid tlimit role');
-        let pr = await Project.findOne({ pid: tsk.pid }, 'pid uid');
-
-        //check for rights to edit task
-        if (usr.role == 'admin' || tsk.uid == uid || pr.uid == uid) {
-            await Task.updateOne({ tid }, req.body);
-            return res.json({ msg: 'successful' });
-        }
-        return res.status(300).send('User has no rights to edit task')
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Unable to update');
-    }
-});
-*/
 
 router.post('/edit', async (req, res) => {
     var { id, checked } = req.body;
     try {
+        //update Task
         await Task.updateOne({ _id: id }, { checked: checked });
+        //set notifications
+        t = await Task.findOne({ _id: id }, 'pid');
+        pr = await Project.findOne({ _id: t.pid }, 'pname members');
+        n_msg = `project - ${pr.pname} progress was changed recently!`;
+        for (let m of pr.members) {
+            var n = Notifications({ uid: m, datetime: new Date(), text: n_msg });
+            await n.save();
+        }
         res.json({ msg: 'Changed Sucessfully' });
     } catch (err) {
         console.error(err.message);
@@ -57,8 +51,14 @@ router.post('/delete', async (req, res) => {
     console.log("API request received for task deletion");
     var { id} = req.body;
     try {
+        var x = await Task.findOne({ _id: id }, 'msg');
+        //set notifications
+        n_msg = `The following task assigned to you was deleted by project admin recently - ${x.msg}`;
+        var n = Notifications({ uid: id, datetime: new Date(), text: n_msg });
+        await n.save();
+        //delete task
         var r = await Task.deleteOne({ _id: id });
-        return res.json({ deleted: r });
+        res.json({ deleted: r });
         } catch (err) {
         console.error(err.message);
         res.status(500).send('Deletion error');

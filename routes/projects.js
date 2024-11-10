@@ -2,6 +2,7 @@ const express = require('express');
 const Project = require('../models/Projects');
 const Task = require('../models/Tasks');
 const User = require('../models/User');
+const Notifications = require('../models/Notifications');
 const createChannel = require('../discord/createChannel');
 const deleteChannel = require('../discord/deleteChannel');
 const fetchMessages = require('../discord/fetchMessages');
@@ -24,6 +25,14 @@ router.post('/create', async (req, res) => {
         await Project.updateOne({ _id: proj._id }, { channelId: channelId });
         //send response
         res.json({ msg: 'project created' });
+
+        //set notification
+        n_msg = `new project - ${name} was created and you were added`;
+        for (let m of proj.members) {
+            console.log(m);
+            var n = Notifications({uid: m, datetime: new Date(), text: n_msg });
+            await n.save();
+        }
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -35,7 +44,14 @@ router.post('/edit', async (req, res) => {
     var { name, members, pid, deadline } = req.body;
     try {
         await Project.updateOne({ _id: pid }, {pname:name,members:members,datetime:deadline});
-        return res.json({ msg: 'successful' });
+        res.json({ msg: 'successful' });
+        //set notifications
+        n_msg = `project - ${name} was edited recently`;
+        proj = await Project.findOne({ _id: pid }, 'members');
+        for (let m of proj.members) {
+            var n = Notifications({ uid: m, datetime: new Date(), text: n_msg });
+            await n.save();
+        }
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Unable to update')
@@ -54,6 +70,14 @@ router.post('/delete', async (req, res) => {
         if (usr.email == 'admin' || uid == pr.uid) {
             //delete channel
             await deleteChannel(pr.channelId);
+            //set notifications
+            pr = await Project.findOne({ _id: pid }, 'pname members');
+            n_msg = `project - ${pr.pname} was set for deletion`;
+            for (let m of pr.members) {
+                var n = Notifications({ uid: m, datetime: new Date(), text: n_msg });
+                await n.save();
+            }
+            //delete project
             var r = await Project.deleteOne({ _id: pid });
             return res.json({ deleted: r });
         }
@@ -189,6 +213,18 @@ router.post('/channel', async (req, res) => {
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Internal Error');
+    }
+});
+
+router.post('/fetch_notice', async (req, res) => {
+    console.log("API request received for fetch notifications");
+    var { id } = req.body;
+    try {
+        msgs = await Notifications.find({ uid: id });
+        res.json(msgs);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Internal Error')
     }
 });
 module.exports = router;
