@@ -103,4 +103,18 @@ router.post('/progress', async (req, res) => {
         return res.status(500).send('Fetch error')
     }
 });
+
+router.post('/task_count', async (req, res) => {
+    console.log("API request received for progress");
+    var { uid, pid } = req.body;
+    try {
+        all_tasks = await Task.countDocuments({ uid: uid, pid: pid });
+        completed = await Task.countDocuments({ uid: uid, pid: pid, checked: true });
+        res.json({all_tasks : all_tasks,completed:completed });
+    } catch (err) {
+        console.error(err.message);
+        return res.status(500).send('Fetch error')
+    }
+});
+
 module.exports = router;
