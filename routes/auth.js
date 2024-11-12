@@ -64,7 +64,7 @@ router.post('/change_pass', async (req, res) => {
         if (usr.email === email && isMatch) {
             const salt = await bcrypt.genSalt(10);
             const epass = await bcrypt.hash(new_pass, salt);
-            await User.UpdateOne({ _id: id }, { pass: new_pass });
+            await User.updateOne({ _id: id }, { pass: epass });
             res.json({ msg: "Success" });
         }
         else {
