@@ -51,7 +51,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="models\" />
-    <Folder Include="Documents\" />
     <Folder Include="discord\" />
     <Folder Include="routes\" />
   </ItemGroup>

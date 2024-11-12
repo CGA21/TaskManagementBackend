@@ -3,9 +3,13 @@ const path = require('path');
 const Project = require('../models/Projects');
 const fileUpload = require('express-fileupload');
 const file = require('../models/files');
+const fs = require('fs');
 
 const router = express.Router();
-const dir = '../Documents';
+
+if (!fs.existsSync(path.join(__dirname, '../Downloads'))) {
+    fs.mkdirSync(path.join(__dirname, '../Downloads'));
+}
 
 router.use(fileUpload());
 
@@ -15,18 +19,19 @@ router.post('/upload', async function (req, res, next) {
     }
     var upfile = req.files.file;
     var { pid , uid } = req.body;
-    var path = dir + `/${pid}/${uid}_` + upfile.name;
-    upfile.mv(path, function (err) {
+    var Path = path.join(__dirname,`../Documents/${pid}/${uid}_` + upfile.name);
+    upfile.mv(Path, function (err) {
         if (err) { return res.status(500).send(err); }
         res.send('File Uploaded');
     });
     try {
-        var f = new file({ pid: pid, filename: upfile.name, filepath: path,uid:uid });
+        var f = new file({ pid: pid, filename: upfile.name, filepath: Path,uid:uid });
         await f.save();
     } catch (err) {
         console.error(err.message);
         es.status(400).send('File upload failed');
     }
+
 });
 
 router.post('/fetch_files', async (req, res) => {
@@ -36,23 +41,23 @@ router.post('/fetch_files', async (req, res) => {
 });
 
 router.get('/download', async (req, res) => {
-    var { id } = req.body;
+    var  id  = req.params.id;
     try {
-        let f = await file.findById(id);
+        let f = await file.findById({ _id: id });
+        const Path = path.join(__dirname, f.filepath);
+        res.download(Path, (err) => {
+            if (err) {
+                if (!res.headersSent) { res.status(404).send('File not found'); }
+                else {
+                    readStream.destroy();
+                    res.end();
+                }
+            }
+        });
     } catch (err) {
         console.log(err.message);
         res.status(500).send('cannot find filename in database');
     }
-    path = dir + `/${f.pid}/${f.uid}_` + f.name;
-    res.download(path, (err) => {
-        if (err) {
-            if (!res.headersSent) { res.status(404).send('File not found'); }
-            else {
-                readStream.destroy();
-                res.end();
-            }
-        }
-    });
 });
 
 router.post('/delete', async (req, res) => {

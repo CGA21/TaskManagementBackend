@@ -54,6 +54,28 @@ router.post('/login', async (req, res) => {
         res.status(500).send('Server error');
     }
 });
+
+router.post('/change_pass', async (req, res) => {
+    var {id, email, old_pass, new_pass } = req.body;
+    console.log("API request received for change password for email:" + email);
+    try {
+        let usr = await User.findOne({ _id: id });
+        const isMatch = await bcrypt.compare(old_pass, usr.pass);
+        if (usr.email === email && isMatch) {
+            const salt = await bcrypt.genSalt(10);
+            const epass = await bcrypt.hash(new_pass, salt);
+            await User.UpdateOne({ _id: id }, { pass: new_pass });
+            res.json({ msg: "Success" });
+        }
+        else {
+            res.json({ msg: "Fail" });
+        }
+    } catch (err) {
+        res.status(500).send('Internal Server Error');
+    }
+
+});
+
 /*
 router.post('/assign_role', async (req, res) => {
     var { uid, new_role } = req.body;
