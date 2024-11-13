@@ -7,17 +7,19 @@ const fs = require('fs');
 
 const router = express.Router();
 
-if (!fs.existsSync(path.join(__dirname, '../Downloads'))) {
+if (!fs.existsSync(path.join(__dirname, '../ '))) {
     fs.mkdirSync(path.join(__dirname, '../Downloads'));
 }
 
 router.use(fileUpload());
 
-router.post('/upload', async function (req, res, next) {
+router.post('/upload', async function (req, res) {
+    console.log("API request received for file upload");
     if (!req.files || !req.files.file) {
         return res.status(422).send('No files were uploaded');
     }
     var upfile = req.files.file;
+    console.log(req.uid, req.pid);
     var { pid , uid } = req.body;
     var Path = path.join(__dirname,`../Documents/${pid}/${uid}_` + upfile.name);
     upfile.mv(Path, function (err) {
@@ -41,19 +43,22 @@ router.post('/fetch_files', async (req, res) => {
 });
 
 router.get('/download', async (req, res) => {
-    var  id  = req.params.id;
+    var id = req.query.id;
+    console.log("API request received for download - " + id);
     try {
-        let f = await file.findById({ _id: id });
-        const Path = path.join(__dirname, f.filepath);
-        res.download(Path, (err) => {
-            if (err) {
-                if (!res.headersSent) { res.status(404).send('File not found'); }
-                else {
-                    readStream.destroy();
-                    res.end();
+        let f = await file.findOne({ _id: id });
+        const Path = path.join(__dirname, '..', f.filepath);
+        let filename = `${f.uid}_${f.filename}`; 
+        if (fs.existsSync(Path)) {
+            res.download(Path, filename, (err) => {
+                if (err) {
+                    console.error('Error downloading file:', err);
+                    res.status(500).send('Error downloading file.');
                 }
-            }
-        });
+            });
+        } else {
+            res.status(404).send('File not found.');
+        }
     } catch (err) {
         console.log(err.message);
         res.status(500).send('cannot find filename in database');
@@ -62,9 +67,13 @@ router.get('/download', async (req, res) => {
 
 router.post('/delete', async (req, res) => {
     var { id } = req.body;
+    console.log("API request received for file delete - " + id);
     try {
-        await file.deleteOne({ _id: id });
-        res.send('file deleted');
+        let f = await file.findOne({ _id: id });
+        const Path = path.join(__dirname, '..', f.filepath);
+        fs.unlinkSync(Path);
+        var r = await file.deleteOne({ _id: id });
+        res.json({ msg: "deleted" });
     } catch (err) {
         console.log(err.message);
         res.status(500).send('error occured internally');

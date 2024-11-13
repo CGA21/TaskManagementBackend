@@ -76,6 +76,34 @@ router.post('/change_pass', async (req, res) => {
 
 });
 
+router.post('/verify', async (req, res) => {
+    var { email, name } = req.body;
+    try {
+        var u = await User.findOne({ email: email, name: name });
+        if (u) { res.json({ msg: "Sucess" }); }
+        else { res.json({ msg: "Fail" }); }
+        
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Internal Error');
+    }
+});
+
+router.post('/forgot_pass', async (req, res) => {
+    var { email, new_pass } = req.body;
+    console.log("API request received for forgot password for email:" + email);
+    try {
+        let usr = await User.findOne({ email: email });
+        const salt = await bcrypt.genSalt(10);
+        const epass = await bcrypt.hash(new_pass, salt);
+        await User.updateOne({ _id: usr._id }, { pass: epass });
+        res.json({ msg: "Success" });
+    } catch (err) {
+        res.status(500).send('Internal Server Error');
+    }
+
+});
+
 /*
 router.post('/assign_role', async (req, res) => {
     var { uid, new_role } = req.body;
