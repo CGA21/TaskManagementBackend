@@ -7,8 +7,8 @@ const fs = require('fs');
 
 const router = express.Router();
 
-if (!fs.existsSync(path.join(__dirname, '../ '))) {
-    fs.mkdirSync(path.join(__dirname, '../Downloads'));
+if (!fs.existsSync(path.join(__dirname, '../Documents'))) {
+    fs.mkdirSync(path.join(__dirname, '../Documents'));
 }
 
 router.use(fileUpload());
